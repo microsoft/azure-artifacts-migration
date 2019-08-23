@@ -1,4 +1,4 @@
-<#<#
+<#
     .SYNOPSIS
         Migrate NuGet Packages From MyGet to Azure DevOps
 
@@ -45,7 +45,7 @@
     .NOTES
         For more information on Personal Access Tokens - https://docs.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
 #>
-function Move-MyGetNuGetPackages2
+function Move-MyGetNuGetPackages
 {
     param
     (
