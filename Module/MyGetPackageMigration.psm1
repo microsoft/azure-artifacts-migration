@@ -1,4 +1,4 @@
-<#
+<#<#
     .SYNOPSIS
         Migrate NuGet Packages From MyGet to Azure DevOps
 
@@ -28,7 +28,7 @@
         being used in any webrequests.
 
     .PARAMETER NumVersions
-        The number of versions you would like of any given package.
+        Max number of versions to migrate
 
     .EXAMPLE
         # Create a Hashtable to splat to your 'Move-MyGetNuGetPackages'
@@ -45,7 +45,7 @@
     .NOTES
         For more information on Personal Access Tokens - https://docs.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
 #>
-function Move-MyGetNuGetPackages
+function Move-MyGetNuGetPackages2
 {
     param
     (
@@ -78,7 +78,7 @@ function Move-MyGetNuGetPackages
         $DestinationFeedName,
 
         [Parameter()]
-        [int[]]
+        [int]
         $NumVersions = $null
     )
 
@@ -115,15 +115,24 @@ function Move-MyGetNuGetPackages
     $destinationCredential = New-Object -TypeName pscredential -ArgumentList 'PackageMigration', $securePassword
 
     # Collects and compares packages from source to Azure DevOps feed
-    $sourceVersions = Get-ContentUrls -IndexUrl $SourceIndexUrl -NumVersions $NumVersions -Credential $sourceCredential
+    $sourceVersions = Get-ContentUrls -IndexUrl $SourceIndexUrl -Credential $sourceCredential
     $destinationVersions = Get-Packages -IndexUrl $DestinationIndexUrl -Credential $destinationCredential
     $versionsMissingInDestination = Get-MissingVersions -SourceVersions $sourceVersions -DestinationVersions $destinationVersions
-    $message = "Found $($sourceVersions.Count) package versions in source, $($destinationVersions.Count) package versions in destination, and $($versionsMissingInDestination.Count) packages versions need to be copied"
-    Write-Host $message
+    Write-Host "Found $($sourceVersions.Count) package versions in source, $($destinationVersions.Count) package versions in destination, and $($versionsMissingInDestination.Count) packages versions need to be copied"
+
     if ($versionsMissingInDestination.Length -gt 0) {
-        $versionContentUrls = $versionsMissingInDestination.Url
+
+        if ($NumVersions -ne $null)
+        {
+            Write-Host "Migrating $NumVersions package versions."
+            $versionsMissingInDestination = $versionsMissingInDestination | Select-Object -First $NumVersions
+            Write-Host $versionsMissingInDestination
+            Write-Host $versionsMissingInDestination.Length
+        }
 
         # Migrates packages from sources to Azure DevOps feed
+        $versionContentUrls = $versionsMissingInDestination.Url
+        Write-Host $versionContentUrls
         $results = Start-MigrationSingleThreaded -ContentUrls $versionContentUrls -DestinationIndexUrl $DestinationIndexUrl -TempFilePath $TempFilePath -SourceCredential $sourceCredential
 
         Out-Results $results
@@ -138,9 +147,6 @@ function Move-MyGetNuGetPackages
     .PARAMETER IndexUrl
         The Index URL from your MyGet Package feed.
 
-    .PARAMETER NumVersions
-        The Index URL of your Azure DevOps feed.
-
     .PARAMETER Credential
         The credential object to connect to packaging source.
 #>
@@ -153,10 +159,6 @@ function Get-ContentUrls
         $IndexUrl,
 
         [Parameter()]
-        [int[]]
-        $NumVersions = $null, 
-
-        [Parameter()]
         [AllowNull()]
         [pscredential]
         $Credential
@@ -164,7 +166,7 @@ function Get-ContentUrls
 
     # Var is used to ensure there aren't multiple requests to package urls
     $Script:registrationRequests = [System.Collections.ArrayList]::new()
-    $packages = (Get-Packages -IndexUrl $IndexUrl -NumVersions $NumVersions -Credential $Credential).id | Select-Object -Unique
+    $packages = (Get-Packages -IndexUrl $IndexUrl -Credential $Credential).id | Select-Object -Unique
 
     #TODO need to edit the received packages to make sure I'm only getting the unique packages
     $registrationBaseUrl = Get-RegistrationBase -IndexUrl $IndexUrl -Credential $Credential
@@ -175,11 +177,8 @@ function Get-ContentUrls
     {
         $registrationUrl = "$registrationBaseUrl/$packageName/index.json"
         $versions = Read-CatalogUrl -RegistrationUrl $registrationUrl -Credential $Credential
-        $null = $result.Add($versions)
-        if ($null -ne $NumVersions -and $result.Count -ge $NumVersions)
-        {
-            return $result[0..$NumVersions]
-        }
+
+        $null = $result.AddRange($versions)
     }
 
     return $result
@@ -298,9 +297,6 @@ function Get-Index
     .PARAMETER Credential
         Credential to access base URL where packages are stored.
 
-    .PARAMETER NumVersions
-        The Number of versions of a given package.
-
     .PARAMETER Take
         Identifies packages in a query
 #>
@@ -316,10 +312,6 @@ function Get-Packages
         [AllowNull()]
         [pscredential]
         $Credential,
-
-        [Parameter()]
-        [int[]]
-        $NumVersions = $null,
 
         [Parameter()]
         [int]
@@ -361,12 +353,7 @@ function Get-Packages
                         Id      = $package.id
                         Version = $version.version
                     }
-
                     $null = $result.add($packageObject)
-                    if ($null -ne $NumVersions -and $result.Count -ge $NumVersions)
-                    {
-                        return $result
-                    }
                 }
             }
 
@@ -405,7 +392,7 @@ function Read-CatalogUrl
         $Credential
     )
 
-    $result = @()
+    $result = [System.Collections.ArrayList]::new()
 
     if ($RegistrationUrl -in $Script:registrationRequests)
     {
@@ -420,10 +407,10 @@ function Read-CatalogUrl
         $null = $Script:registrationRequests.Add($RegistrationUrl)
         foreach ($item in $response.items)
         {
-            $result += (Read-CatalogEntry -Item $item)
+            $null = $result.AddRange((Read-CatalogEntry -Item $item))
         }
 
-        return $result
+        Write-Output -NoEnumerate $result
     }
 }
 
@@ -452,13 +439,13 @@ function Read-CatalogEntry
     if ($itemType -eq 'catalog:CatalogPage' -and $null -eq $item.items)
     {
         $catalogUrl = $Item.'@id'
-        $null = $result.Add((Read-CatalogUrl -RegistrationUrl $catalogUrl))
+        $null = $result.AddRange((Read-CatalogUrl -RegistrationUrl $catalogUrl))
     }
     elseif ($itemType -eq 'catalog:CatalogPage')
     {
         foreach ($subItem in $Item.items)
         {
-            $null = $result.Add((Read-CatalogEntry -Item $subItem))
+            $null = $result.AddRange((Read-CatalogEntry -Item $subItem))
         }
     }
     elseif ($itemType -eq 'Package')
@@ -472,7 +459,7 @@ function Read-CatalogEntry
         $null = $result.Add($returnItem)
     }
 
-    return $result
+    Write-Output -NoEnumerate $result
 }
 
 <#
@@ -717,17 +704,22 @@ function Get-MissingVersions
         $DestinationVersions
     )
 
-    $missingPackages = [System.Collections.ArrayList]::new()
+    # hashtable of name____id for fast lookup.  Powershell hashtables are not case sensitive.
+    $destHash = @{}
+    $sep = "_____"
+    $DestinationVersions | ForEach-Object {$destHash.Add("$($_.Id)$sep$($_.Version)", $null)}
+
+    $missingPackages = [System.Collections.ArrayList]@()
     foreach ($sourceVersion in $SourceVersions)
     {
-        $destinationMatch = $DestinationVersions | Where-Object { ($sourceVersion.Name -ieq $_.Id) -and ($sourceVersion.Version -ieq $_.Version) }
-        if ($null -eq $destinationMatch)
+        $key = "$($sourceVersion.Name)$sep$($sourceVersion.Version)"
+        if (-not $destHash.ContainsKey($key))
         {
-            $missingPackages.Add($sourceVersion);
+            $null = $missingPackages.Add($sourceVersion);
         }
     }
 
-    return $missingPackages
+    return $missingPackages;
 }
 
 <#
