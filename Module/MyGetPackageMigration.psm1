@@ -30,9 +30,6 @@
     .PARAMETER NumVersions
         The number of versions you would like of any given package.
 
-    .PARAMETER Verbose
-        Switch to turn on verbose messaging.
-
     .EXAMPLE
         # Create a Hashtable to splat to your 'Move-MyGetNuGetPackages'
         $params = @{
@@ -82,11 +79,7 @@ function Move-MyGetNuGetPackages
 
         [Parameter()]
         [int[]]
-        $NumVersions = $null,
-
-        [Parameter()]
-        [switch]
-        $Verbose
+        $NumVersions = $null
     )
 
     if ($null -eq $TempFilePath)
@@ -125,14 +118,16 @@ function Move-MyGetNuGetPackages
     $sourceVersions = Get-ContentUrls -IndexUrl $SourceIndexUrl -NumVersions $NumVersions -Credential $sourceCredential
     $destinationVersions = Get-Packages -IndexUrl $DestinationIndexUrl -Credential $destinationCredential
     $versionsMissingInDestination = Get-MissingVersions -SourceVersions $sourceVersions -DestinationVersions $destinationVersions
-    $message = "Found $($sourceVersions.Count) package titles in source, $($destinationVersions.Count) package titles in destination, and $($versionsMissingInDestination.Count) packages titles need to be copied"
-    Write-Verbose $message
-    $versionContentUrls = $versionsMissingInDestination.Url
+    $message = "Found $($sourceVersions.Count) package versions in source, $($destinationVersions.Count) package versions in destination, and $($versionsMissingInDestination.Count) packages versions need to be copied"
+    Write-Host $message
+    if ($versionsMissingInDestination.Length -gt 0) {
+        $versionContentUrls = $versionsMissingInDestination.Url
 
-    # Migrates packages from sources to Azure DevOps feed
-    $results = Start-MigrationSingleThreaded -ContentUrls $versionContentUrls -DestinationIndexUrl $DestinationIndexUrl -TempFilePath $TempFilePath -SourceCredential $sourceCredential
+        # Migrates packages from sources to Azure DevOps feed
+        $results = Start-MigrationSingleThreaded -ContentUrls $versionContentUrls -DestinationIndexUrl $DestinationIndexUrl -TempFilePath $TempFilePath -SourceCredential $sourceCredential
 
-    Out-Results $results
+        Out-Results $results
+    }
     $VerbosePreference = $oldVerbosePreference
 }
 
@@ -723,23 +718,12 @@ function Get-MissingVersions
     )
 
     $missingPackages = [System.Collections.ArrayList]::new()
-    foreach ($package in $SourceVersions)
+    foreach ($sourceVersion in $SourceVersions)
     {
-        $sourcePackage = $package | Where-Object -FilterScript {$_.Name -in $DestinationVersions.Id}
-
-        if ($sourcePackage)
+        $destinationMatch = $DestinationVersions | Where-Object { ($sourceVersion.Name -ieq $_.Id) -and ($sourceVersion.Version -ieq $_.Version) }
+        if ($null -eq $destinationMatch)
         {
-            $matchingDestinationPackages = ($DestinationVersions | Where-Object -FilterScript {$_.Id -eq $sourcePackage.Name}).Version
-            $sourcePackage = $sourcePackage | Where-Object -FilterScript {$_.Version -notin $matchingDestinationPackages}
-
-            if ($sourcePackage)
-            {
-                $null = $missingPackages.Add($sourcePackage)
-            }
-        }
-        else
-        {
-            $null = $missingPackages.Add($package)
+            $missingPackages.Add($sourceVersion);
         }
     }
 
