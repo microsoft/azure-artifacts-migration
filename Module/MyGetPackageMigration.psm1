@@ -126,13 +126,10 @@ function Move-MyGetNuGetPackages
         {
             Write-Host "Migrating $NumVersions package versions."
             $versionsMissingInDestination = $versionsMissingInDestination | Select-Object -First $NumVersions
-            Write-Host $versionsMissingInDestination
-            Write-Host $versionsMissingInDestination.Length
         }
 
         # Migrates packages from sources to Azure DevOps feed
         $versionContentUrls = $versionsMissingInDestination.Url
-        Write-Host $versionContentUrls
         $results = Start-MigrationSingleThreaded -ContentUrls $versionContentUrls -DestinationIndexUrl $DestinationIndexUrl -TempFilePath $TempFilePath -SourceCredential $sourceCredential
 
         Out-Results $results
