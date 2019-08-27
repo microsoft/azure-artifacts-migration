@@ -122,7 +122,7 @@ function Move-MyGetNuGetPackages
 
     if ($versionsMissingInDestination.Length -gt 0) {
 
-        if ($NumVersions -ne $null)
+        if ($null -ne $NumVersions)
         {
             Write-Host "Migrating $NumVersions package versions."
             $versionsMissingInDestination = $versionsMissingInDestination | Select-Object -First $NumVersions
