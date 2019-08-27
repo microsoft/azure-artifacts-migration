@@ -12,7 +12,7 @@
 RootModule = 'AzureArtifactsPackageMigration.psm1'
 
 # Version number of this module.
-ModuleVersion = '1.0.0'
+ModuleVersion = '1.0.1'
 
 # Supported PSEditions
 # CompatiblePSEditions = @()
@@ -30,7 +30,7 @@ CompanyName = 'Microsoft'
 Copyright = '(c) Microsoft. All rights reserved.'
 
 # Description of the functionality provided by this module
-Description = 'This module helps to migrate packages from pacakge solution providers to Azure Artifacts.'
+Description = 'This module helps to migrate packages from package solution providers to Azure Artifacts.'
 
 # Minimum version of the PowerShell engine required by this module
 # PowerShellVersion = ''
@@ -83,7 +83,7 @@ PrivateData = @{
         # IconUri = ''
 
         # ReleaseNotes of this module
-        # ReleaseNotes = ''
+        ReleaseNotes = 'Updates module description'
 
     } # End of PSData hashtable
 
