@@ -47,6 +47,7 @@
 #>
 function Move-MyGetNuGetPackages
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -150,6 +151,7 @@ function Move-MyGetNuGetPackages
 #>
 function Get-ContentUrls
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -194,6 +196,7 @@ function Get-ContentUrls
 #>
 function Get-V3SearchBaseURL
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -220,6 +223,7 @@ function Get-V3SearchBaseURL
 #>
 function Get-V3FlatBaseURL
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -240,6 +244,7 @@ function Get-V3FlatBaseURL
 #>
 function Get-RegistrationBase
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -270,6 +275,7 @@ function Get-RegistrationBase
 #>
 function Get-Index
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -300,6 +306,7 @@ function Get-Index
 #>
 function Get-Packages
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -378,6 +385,7 @@ function Get-Packages
 #>
 function Read-CatalogUrl
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -425,6 +433,7 @@ function Read-CatalogUrl
 #>
 function Read-CatalogEntry
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -483,6 +492,7 @@ function Read-CatalogEntry
 #>
 function Start-MigrationSingleThreaded
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -536,6 +546,7 @@ function Start-MigrationSingleThreaded
 #>
 function Start-Migration
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -621,6 +632,7 @@ function Start-Migration
 #>
 function Out-Result
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -665,6 +677,7 @@ function Out-Result
 #>
 function Out-Results
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -692,6 +705,7 @@ function Out-Results
 #>
 function Get-MissingVersions
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -732,6 +746,7 @@ function Get-MissingVersions
 #>
 function Start-Command
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
@@ -779,6 +794,7 @@ function Start-Command
 #>
 function Update-NuGetSource
 {
+    [CmdletBinding()]
     param
     (
         [Parameter(Mandatory = $true)]
