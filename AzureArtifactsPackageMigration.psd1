@@ -30,7 +30,7 @@ CompanyName = 'Microsoft'
 Copyright = '(c) Microsoft. All rights reserved.'
 
 # Description of the functionality provided by this module
-# Description = ''
+Description = 'This module helps to migrate packages from pacakge solution providers to Azure Artifacts.'
 
 # Minimum version of the PowerShell engine required by this module
 # PowerShellVersion = ''
