@@ -79,7 +79,7 @@ function Move-MyGetNuGetPackages
 
         [Parameter()]
         [int]
-        $NumVersions = $null
+        $NumVersions = -1
     )
 
     if ($null -eq $TempFilePath)
@@ -120,13 +120,14 @@ function Move-MyGetNuGetPackages
     $versionsMissingInDestination = Get-MissingVersions -SourceVersions $sourceVersions -DestinationVersions $destinationVersions
     Write-Host "Found $($sourceVersions.Count) package versions in source, $($destinationVersions.Count) package versions in destination, and $($versionsMissingInDestination.Count) packages versions need to be copied"
 
+    if ($NumVersions -gt -1 -and $NumVersions -lt $versionsMissingInDestination.Length)
+    {
+        $versionsMissingInDestination = $versionsMissingInDestination | Select-Object -First $NumVersions
+    }
+
     if ($versionsMissingInDestination.Length -gt 0) {
 
-        if ($null -ne $NumVersions)
-        {
-            Write-Host "Migrating $NumVersions package versions."
-            $versionsMissingInDestination = $versionsMissingInDestination | Select-Object -First $NumVersions
-        }
+        Write-Host "Migrating $($versionsMissingInDestination.Length) package versions."
 
         # Migrates packages from sources to Azure DevOps feed
         $versionContentUrls = $versionsMissingInDestination.Url
