@@ -439,7 +439,7 @@ function Read-CatalogEntry
         [Parameter(Mandatory = $true)]
         $Item,
 		
-		[Parameter()]
+	[Parameter()]
         [AllowNull()]
         [pscredential]
         $Credential
