@@ -109,7 +109,7 @@ function Move-MyGetNuGetPackages
 
     if ($SourcePassword)
     {
-        $sourceCredential = New-Object -TypeName pscredential -ArgumentList $SourceUsername, $secureSourcePassword
+        $sourceCredential = New-Object -TypeName pscredential -ArgumentList $SourceUsername, $SourcePassword
     }
 
     $securePassword = ConvertTo-SecureString -String $DestinationPAT -AsPlainText -Force
@@ -413,7 +413,7 @@ function Read-CatalogUrl
         $null = $Script:registrationRequests.Add($RegistrationUrl)
         foreach ($item in $response.items)
         {
-            $null = $result.AddRange((Read-CatalogEntry -Item $item))
+            $null = $result.AddRange((Read-CatalogEntry -Item $item -Credential $Credential))
         }
 
         Write-Output -NoEnumerate $result
@@ -437,7 +437,12 @@ function Read-CatalogEntry
     param
     (
         [Parameter(Mandatory = $true)]
-        $Item
+        $Item,
+		
+		[Parameter()]
+        [AllowNull()]
+        [pscredential]
+        $Credential
     )
 
     $result = [System.Collections.ArrayList]::new()
@@ -446,13 +451,13 @@ function Read-CatalogEntry
     if ($itemType -eq 'catalog:CatalogPage' -and $null -eq $item.items)
     {
         $catalogUrl = $Item.'@id'
-        $null = $result.AddRange((Read-CatalogUrl -RegistrationUrl $catalogUrl))
+        $null = $result.AddRange((Read-CatalogUrl -RegistrationUrl $catalogUrl -Credential $Credential))
     }
     elseif ($itemType -eq 'catalog:CatalogPage')
     {
         foreach ($subItem in $Item.items)
         {
-            $null = $result.AddRange((Read-CatalogEntry -Item $subItem))
+            $null = $result.AddRange((Read-CatalogEntry -Item $subItem -Credential $Credential))
         }
     }
     elseif ($itemType -eq 'Package')
@@ -768,11 +773,15 @@ function Start-Command
     $process = New-Object System.Diagnostics.Process
     $process.StartInfo = $processInfo
     $process.Start() | Out-Null
+
+    $output = $process.StandardOutput.ReadToEnd();
+    $error = $process.StandardError.ReadToEnd();
+
     $process.WaitForExit()
 
     $return = [pscustomobject]@{
-        StdOut = $process.StandardOutput.ReadToEnd()
-        StdErr = $process.StandardError.ReadToEnd()
+        StdOut = $output
+        StdErr = $error
         ExitCode = $process.ExitCode
     }
 
