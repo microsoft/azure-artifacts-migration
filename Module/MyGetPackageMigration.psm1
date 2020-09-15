@@ -109,7 +109,7 @@ function Move-MyGetNuGetPackages
 
     if ($SourcePassword)
     {
-        $sourceCredential = New-Object -TypeName pscredential -ArgumentList $SourceUsername, $secureSourcePassword
+        $sourceCredential = New-Object -TypeName pscredential -ArgumentList $SourceUsername, $SourcePassword
     }
 
     $securePassword = ConvertTo-SecureString -String $DestinationPAT -AsPlainText -Force
