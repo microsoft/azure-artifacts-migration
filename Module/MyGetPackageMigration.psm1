@@ -45,6 +45,8 @@
     .NOTES
         For more information on Personal Access Tokens - https://docs.microsoft.com/azure/devops/organizations/accounts/use-personal-access-tokens-to-authenticate
 #>
+
+$ErrorActionPreference = "Stop"
 function Move-MyGetNuGetPackages
 {
     [CmdletBinding()]
